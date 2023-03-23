@@ -2,77 +2,98 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import gammaln
 from scipy.stats import invgamma, norm
+from ILC_analyzer.plotting import plot_x_with_uncertainty
+import matplotlib.pyplot as plt
 
 
 class NigDist:
-    def __init__(self, x, sigma):
+    def __init__(self, x, sigma, k=1, num_points=100):
         self.xi = x
-        self.yi = sigma
+        self.sigmai = sigma
+
+        self.num_points = num_points
+        self.xi_min = np.min(self.xi)
+        self.xi_max = np.max(self.xi)
+        self.sigmai_min = np.min(self.sigmai)
+        self.sigmai_max = np.max(self.sigmai)
+        # Define arrays of x and sigma points
+        self.multiplier = 0.2
+        self.x_range = np.linspace(self.xi_min - self.multiplier * np.abs(self.xi_max - self.xi_min),
+                                   self.xi_max + self.multiplier * np.abs(self.xi_max - self.xi_min), self.num_points)
+        self.sigma_range = np.linspace(
+            np.clip(self.sigmai_min - self.multiplier * np.abs(self.sigmai_max), a_min=1e-10, a_max=np.inf),
+            self.sigmai_max + self.multiplier * np.abs(self.sigmai_max), self.num_points)
+
         self.mu = None
         self.lambda_ = None
         self.alpha = None
         self.beta = None
-        self.unc_aleatoric = None
-        self.unc_epistemic = None
-        self.k = None
 
-    def estimate_nig_params(self):
-        mean_sigma = np.mean(self.yi)
-        var_sigma = np.var(self.yi)
-        self.alpha = (mean_sigma ** 2) / var_sigma
-        self.beta = mean_sigma * (self.alpha - 1)
+        self.k = k
+
+        self.mu, self.lambda_, self.alpha, self.beta = self.estimate_nig_params(x=self.xi, sigma=self.sigmai)
+        self.unc_aleatoric = self.aleatoric_uncertainy_from_nig(self.alpha, self.beta, k=self.k)
+        self.unc_epistemic = self.epistemic_uncertainy_from_nig(self.lambda_, self.alpha, self.beta, self.k)
+
+    def plot_x_with_uncertainty(self):
+        plot_x_with_uncertainty(self.xi, self.sigmai, self.mu, self.unc_aleatoric, self.k)
+
+    def plot_3d(self):
+        """
+        Plots a 3D surface plot of the function defined by Z over the (x, sigma) domain.
+        """
+        x, sigma = np.meshgrid(self.x_range, self.sigma_range)
+        Z = normal_inverse_gamma(x, sigma, self.mu, self.lambda_, self.alpha, self.beta)
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_surface(x, sigma, Z, cmap='viridis')
+        ax.set_xlabel('x')
+        ax.set_ylabel('sigma')
+        ax.set_zlabel('f(x, sigma)')
+        ax.set_title('3D Plot')
+        plt.show()
+
+    @staticmethod
+    def estimate_nig_params(x, sigma):
+        # Estimate alpha and beta using method of moments
+        mean_sigma = np.mean(sigma)
+        var_sigma = np.var(sigma)
+        alpha = (mean_sigma ** 2) / var_sigma
+        beta = mean_sigma * (alpha - 1)
+
+        # Initial guesses for mu and lambda
         initial_params = np.array([0, 1], dtype=np.float64)
-        bounds = [(None, None), (1e-10, None)]
-        result = minimize(
-            self.log_likelihood,
-            initial_params,
-            args=(self.xi, self.alpha, self.beta, self.yi),
-            method="L-BFGS-B",
-            bounds=bounds,
-        )
-        self.mu, self.lambda_ = result.x
+        bounds = [(None, None), (1e-10, None)]  # Bounds for mu and lambda
+        result = minimize(log_likelihood, initial_params, args=(x, alpha, beta, sigma), method='L-BFGS-B',
+                          bounds=bounds)
+        mu, lambda_ = result.x
+        return mu, lambda_, alpha, beta
 
-        self.unc_aleatoric = self.aleatoric_uncertainty_from_nig()
-        self.unc_epistemic = self.epistemic_uncertainty_from_nig()
-
-
-        return self.mu, self.lambda_, self.alpha, self.beta
-
-    def log_likelihood(self, params, x, alpha, beta, sigma):
+    @staticmethod
+    def log_likelihood(params, x, sigma, alpha, beta):
         mu, lambda_ = params
         gamma_alpha = gammaln(alpha)
-        log_pdf = (
-            alpha * np.log(beta)
-            + 0.5 * np.log(lambda_)
-            - alpha * np.log(sigma)
-            - 0.5 * lambda_ * (x - mu) ** 2 / sigma
-            - beta / sigma
-            - (alpha + 1) * np.log(sigma)
-            - 0.5 * np.log(2 * np.pi)
-            - gamma_alpha
-        )
+        log_pdf = (alpha * np.log(beta) + 0.5 * np.log(lambda_) - alpha * np.log(sigma)
+                   - 0.5 * lambda_ * (x - mu) ** 2 / sigma - beta / sigma
+                   - (alpha + 1) * np.log(sigma) - 0.5 * np.log(2 * np.pi) - gamma_alpha)
         return -np.sum(log_pdf)
 
     @staticmethod
     def normal_inverse_gamma(x, sigma, mu, lambd, alpha, beta):
         return (
-            norm.pdf(x, loc=mu, scale=np.sqrt(1 / (lambd * sigma)))
-            * invgamma.pdf(sigma, alpha, scale=beta)
+                norm.pdf(x, loc=mu, scale=np.sqrt(1 / (lambd * sigma)))
+                * invgamma.pdf(sigma, alpha, scale=beta)
         )
 
-    def aleatoric_uncertainty_from_nig(self, k=1):
-        self.k = k
-        self.unc_aleatoric = self.k * (self.beta / (self.alpha - 1))
-        print(self.unc_aleatoric)
-        return self.unc_aleatoric
+    @staticmethod
+    def aleatoric_uncertainy_from_nig(alpha, beta, k=1):
+        return k * (beta / (alpha - 1))
 
-    def epistemic_uncertainty_from_nig(self, k=1):
-        print(self.mu, self.lambda_, self.alpha, self.beta)
-        self.k = k
-        print(f'self.lambda_:{self.lambda_}')
-        self.unc_epistemic=self.k * (self.beta / ((self.alpha - 1) * self.lambda_))
-        print(f'epistemic:{self.unc_epistemic}')
-        return self.unc_epistemic
+    @staticmethod
+    def epistemic_uncertainy_from_nig(lambda_, alpha, beta, k=1):
+        return k * (beta / ((alpha - 1) * lambda_))
+
+
 ###########################################################################
 def aleatoric_uncertainy_from_nig(alpha, beta, k=1):
     return k * (beta / (alpha - 1))
@@ -108,6 +129,3 @@ def estimate_nig_params(x, sigma):
     result = minimize(log_likelihood, initial_params, args=(x, alpha, beta, sigma), method='L-BFGS-B', bounds=bounds)
     mu, lambda_ = result.x
     return mu, lambda_, alpha, beta
-
-
-
