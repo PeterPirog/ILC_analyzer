@@ -57,3 +57,9 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
+"""
+mając daną funkcję dodatnią f(x,y) >0, i kontur krzywej zamknietej zdefiniowanej parami punktów (x,y)
+napisz funkcję w python wyznaczającą objetość przestrzeni pomiędzy funkcją f(x,y) dla wszystkich x,y znajdujących się wewnątz konturu
+a płaszczyzną f(x,y)=0
+"""
+
