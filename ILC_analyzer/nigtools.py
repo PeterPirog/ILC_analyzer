@@ -105,7 +105,7 @@ def epistemic_uncertainy_from_nig(lambda_, alpha, beta, k=1):
 
 def normal_inverse_gamma(x, sigma, mu, lambd, alpha, beta):
     return norm.pdf(x, loc=mu, scale=np.sqrt(1 / (lambd * sigma))) * invgamma.pdf(sigma, alpha, scale=beta)
-
+# pdf(x, sigma|mu, lambda, alpha, beta) = 1/(sqrt(2pisigma^2 / lambda)) * (beta^alpha / Gamma(alpha)) * (sigma^(-alpha-1)) * exp(-(2beta + lambda(x-mu)^2)/(2sigma^2lambda))
 
 def log_likelihood(params, x, sigma, alpha, beta):
     mu, lambda_ = params
