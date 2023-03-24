@@ -5,7 +5,7 @@ from scipy.stats import invgamma, norm
 from ILC_analyzer.plotting import plot_x_with_uncertainty
 import matplotlib.pyplot as plt
 
-
+#https://deebuls.github.io/devblog/probability/python/plotting/matplotlib/2020/05/19/probability-normalinversegamma.html
 class NigDist:
     def __init__(self, x, sigma, k=1, num_points=100):
         self.xi = x

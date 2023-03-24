@@ -89,4 +89,8 @@ def green_volume_integral(f, contour_points, mu, lambda_, alpha, beta, n_points=
     return nquad(integrand, [s_bounds, t_bounds])[0]
 
 contour_points = np.array([(x, y) for x, y
+
+dana jest funkcja f(x,sigma|mu,lambda,alpha, beta) będąca funkcja gęstości rozkładu prawdopodobieństwa. Znajdź równanie parametryczne krzywej x,sigma spełniającej warunek  f(x,sigma|mu,lambda,alpha, beta) =v, gdzie v określona stała
+
+
 """
