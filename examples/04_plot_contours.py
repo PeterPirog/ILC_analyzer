@@ -64,6 +64,14 @@ if __name__ == "__main__":
            print("Punkt (2,2) znajduje się na zewnątrz obszaru.")
 
 """
+
+Tak, funkcja gęstości prawdopodobieństwa musi spełniać następujące warunki:
+
+Musi być nieujemna dla każdej wartości zmiennych losowych x i y: f(x,y) >= 0.
+Całka z funkcji gęstości prawdopodobieństwa musi wynosić 1 w całym obszarze zmiennej losowej: ∫∫ f(x,y) dxdy = 1.
+Prawdopodobieństwo wystąpienia zmiennej losowej w dowolnym obszarze A jest równe całce podwójnej funkcji gęstości prawdopodobieństwa w tym obszarze: P((x,y) ∈ A) = ∫∫A f(x,y) dxdy.
+
+
 from shapely.geometry import Point, Polygon
 
 # Definiujemy krzywą zamkniętą

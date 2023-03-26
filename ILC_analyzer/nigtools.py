@@ -129,3 +129,32 @@ def estimate_nig_params(x, sigma):
     result = minimize(log_likelihood, initial_params, args=(x, alpha, beta, sigma), method='L-BFGS-B', bounds=bounds)
     mu, lambda_ = result.x
     return mu, lambda_, alpha, beta
+
+"""
+Pochodna względem sigma:
+Pochodna funkcji pdf(x, sigma|mu, lambda, alpha, beta) względem sigma to:
+
+d/dsigma [pdf(x, sigma|mu, lambda, alpha, beta)] = (-1/(sigma^2)) * (beta^alpha / Gamma(alpha)) * (sigma^(-alpha)) * exp(-(2beta + lambda(x-mu)^2)/(2sigma^2lambda)) * (1 - (alpha/sigma^2)*(2beta + lambda(x-mu)^2)/(2sigma^2lambda))
+
+Pochodna względem x:
+Pochodna funkcji pdf(x, sigma|mu, lambda, alpha, beta) względem x to:
+
+d/dx [pdf(x, sigma|mu, lambda, alpha, beta)] = (beta^alpha / Gamma(alpha)) * (sigma^(-alpha-1)) * exp(-(2beta + lambda(x-mu)^2)/(2sigma^2lambda)) * ((lambda/sigma^2) * (x-mu))
+
+0=(-1/(sigma^2)) * (beta^alpha / Gamma(alpha)) * (sigma^(-alpha)) * exp(-(2beta + lambda(x-mu)^2)/(2sigma^2lambda)) * (1 - (alpha/sigma^2)*(2beta + lambda(x-mu)^2)/(2sigma^2lambda))
+0=(beta^alpha / Gamma(alpha)) * (sigma^(-alpha-1)) * exp(-(2beta + lambda(x-mu)^2)/(2sigma^2lambda)) * ((lambda/sigma^2) * (x-mu))
+
+Dany jest układ równań
+sigma^2 = alpha(2beta + lambda(x-mu)^2)/(2lambda)
+x = mu + beta/lambda * sigma
+
+rozwiąż go wyznaczając wartości x, sigma dla sigma >0
+
+Ostatecznie mamy układ równań:
+y = (alpha/2lambda) * 2beta + (alpha/2) * (beta/lambda * sqrt(2lambday/alpha - 2beta))^2
+x = mu + beta/lambda * sqrt(2lambday/alpha - 2beta)
+
+
+
+
+"""
