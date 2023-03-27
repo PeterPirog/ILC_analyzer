@@ -33,7 +33,8 @@ def plot_contour(X, Sigma, Z, x_min, x_max, sigma_min, sigma_max):
     plt.show()
 
 if __name__ == "__main__":
-    xi, sigmai = 1.23, 0.36
+    #xi, sigmai = 1.23, 0.36
+    xi, sigmai = 2, 2
 
     mu = 1.5720
     lambda_ = 31.3454
